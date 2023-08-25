@@ -1,12 +1,36 @@
-# The smallest ASP.NET backend-API website you can easily run on your local computer
+# A tiny ASP.NET website that displays values from Azure App Configuration
+
+## NEXT STEPS
+
+1. Play with Key Vault.
+2. Play with Key Vault and sentinel values.  (Do they help update Key Vault?)
+3. And what's this 3rd thing "periodically reload..."?  How does/doesn't it interact w/ sentinel usage?
+      * https://learn.microsoft.com/en-us/azure/azure-app-configuration/reload-key-vault-secrets-dotnet
+4. And how do you avoid overprogramming or toe-stepping with "SetSecretRefreshInterval" vs. "ConfigureRefresh"?
 
 ---
 
 ## Prerequisites
 
-1. You must install the .NET runtime _(preferably version 7, as that's what I coded this using)_ onto your local machine in a way that lets you run commands beginning with "`dotnet`" from your computer's command prompt _(the "dotnet" executable must be in your "PATH.")_.
+1. To play with this on your local computer, you must install the .NET runtime _(preferably version 7, as that's what I coded this using)_ onto your local machine in a way that lets you run commands beginning with "`dotnet`" from your computer's command prompt _(the "dotnet" executable must be in your "PATH.")_.
     * Don't have Windows admin rights?  Check out David Kou's [Install the .NET runtime onto Windows without admin rights](https://dev.to/davidkou/install-anything-without-admin-rights-4p0j#install-dotnet-sdk-or-runtime-without-admin).
 2. You must download a copy of this codebase onto your local computer.
+3. Assign the "App Configuration Data Reader" role to whatever Azure AD identity will be logging into Azure App Configuration for this runtime.  Plain old "Owner" or "Contributor" isn't adequate.  Wait up to 15 minutes before you stop getting 403 errors.
+4. It seems actually having a key-value pair or something else in the App Configuration resource also helps avoid 403 errors.
+5. Assign the "Key Vault Secrets User" role to whatever Azure AD identity will be logging into Azure App Configuration for this runtime.  Plain old "Owner" or "Contributor" isn't adequate.
+6. You personally may also need "Key Vault Administrator" to go into the Azure portal and set up secrets in Key Vault.
+7. Create 2 secrets in your Key Vault resource:
+      * `directlyAccessedSecretFlavorPullUpdate` with a value of "`margherita`".
+      * `indirectlyAccessedSecretFlavorPullUpdate` with a value of "`sausage`".
+      * `indirectlyAccessedSecretFlavorStatic` with a value of "`anchovy`".
+8. Create the following key-value pairs in your Azure App Configuration resource:
+      * `sentinel-for-pull-update` with a value of "`attempt 1`".
+      * `pizza-flavor-non-secret-pull-update` with a value of "`green pepper`".
+      * `pizza-flavor-non-secret-static` with a value of "`pineapple`".
+8. Create the following Key Vault references in your Azure App Configuration resource:
+      * `pizza-flavor-indirect-secret-pull-update` with a secret reference pointing to "`indirectlyAccessedSecretFlavorPullUpdate`".
+      * `pizza-flavor-indirect-secret-static` with a secret reference pointing to "`indirectlyAccessedSecretFlavorStatic`".
+
 
 ---
 
@@ -70,6 +94,25 @@ Take a look in the upper-left corner of the webpage you just visited:  it should
 
 ---
 
+## Trying key-value updates
+
+1. Change the value of "`pizza-flavor-non-secret-pull-update`" to "`green pepper 2`".  Wait 15 seconds, reload the webpage twice, and validate that it still says "`green pepper`".
+1. Change the value of "`pizza-flavor-non-secret-static`" to "`pineapple 2`".  Wait 15 seconds, reload the webpage twice, and validate that it still says "`pineapple`".
+1. Change the value of "`sentinel-for-pull-update`" to "`attempt 2`".  Wait 15 seconds, reload the webpage twice, and validate that it now says "`green pepper 2`" but still just "`pineapple`."
+      * You should also see server logs after the first post-sentinel-edit reload, and before the second, reading something like this:
+            ```
+            info: Microsoft.Extensions.Configuration.AzureAppConfiguration.Refresh[0]
+                  Setting updated. Key:'sentinel-for-pull-update'
+                  Configuration reloaded.
+            ```
+      * You might also see something like:
+            ```
+            info: Microsoft.Extensions.Configuration.AzureAppConfiguration.Refresh[0]
+                  Setting updated from Key Vault. Key:'pizza-flavor-indirect-secret-pull-update'
+            ```
+
+---
+
 ## Stopping your web server
 
 Go back to the command line interface from which you ran `./my_output/Handwritten.exe`.
@@ -78,39 +121,7 @@ Hold <kbd>Ctrl</kbd> and hit <kbd>c</kbd>, then release them both.
 
 ---
 
-## A build CI/CD pipeline for Azure DevOps Pipelines
+## Notes
 
-I'm not sure I'll get around to making cloud instructions for this codebase any time soon, so if you'd like to guess your way through adapting lessons from [az-as-wa-001-node-express-tiny](https://github.com/kkgthb/az-as-wa-001-node-express-tiny) to apply to this codebase instead, here's the "build pipeline" YAML I used in Azure DevOps Pipelines:
-
-```yaml
-trigger:
-- main
-
-pool:
-  vmImage: "windows-latest"
-
-steps:
-
-- task: UseDotNet@2
-  displayName: "Install .NET Core SDK"
-  inputs:
-    version: 7.x
-    performMultiLevelLookup: true
-    includePreviewVersions: true
-
-- task: DotNetCoreCLI@2
-  displayName: "DotNet Publish"
-  inputs:
-    command: publish
-    workingDirectory: "src/web"
-    arguments: "--configuration Release --output $(Build.ArtifactStagingDirectory)"
-    zipAfterPublish: True
-
-- task: PublishBuildArtifacts@1
-  displayName: "Publish build-artifact from staging directory to named artifact"
-  inputs:
-    PathToPublish: "$(Build.ArtifactStagingDirectory)"
-    ArtifactName: "MyBuiltDotNetWebsite"
-```
-
-The "published artifact" output of running such a pipeline against this repository should be a folder called `MyBuiltDotNetWebsite` with one `.zip`-typed file in it.  If you were to download the `.zip` file to your computer _(click its name in the published artifact file-tree browser)_ and open it, its contents would look like those of the `/my_output/` folder you saw on your desktop computer earlier _(approximately 6 files, including one called `Handwritten.exe`)_.
+* Even if you set your sentinel-polling lifecycle to 15 seconds and let 15 seconds elapse, .NET won't actually bother to poll Azure App Config and check whether "sentinel" has been updated until some sort of URL _(not necessarily a valid one, just one)_ gets actually visited.
+      * Therefore, don't be surprised if you have to reload your web page twice to see your changes.  _(Or visit some other page and then reload the page on which you want to see your changes.)_
