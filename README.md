@@ -28,10 +28,11 @@
       * `sentinel-for-pull-update` with a label of "`pull-update`" and a value of "`attempt 1`".
       * `pizza-flavor-non-secret-pull-update` with a label of "`pull-update`" and a value of "`green pepper`".
       * `pizza-flavor-non-secret-static` with a label of "`static`" and a value of "`pineapple`".
-8. Create the following Key Vault references in your Azure App Configuration resource:
+9. Create the following Key Vault references in your Azure App Configuration resource:
       * `pizza-flavor-indirect-secret-pull-update` with a label of "`pull-update`" and a secret reference pointing to "`indirectlyAccessedSecretFlavorPullUpdate`".
       * `pizza-flavor-indirect-secret-static` with a label of "`static`" and a secret reference pointing to "`indirectlyAccessedSecretFlavorStatic`".
       * `pizza-flavor-indirect-secret-sentinelless-pull` with a label of "`sentinelless-pull`" and a secret reference pointing to "`indirectlyAccessedSecretFlavorSentinellessPull`".
+10. Find and replace all occurrences of "`INSERT-YOUR-APP-CONFIG-RESOURCE-NAME-HERE`" under the `src/web` folder of this codebase with the actual name of your Azure App Configuration resource.
 
 
 ---
