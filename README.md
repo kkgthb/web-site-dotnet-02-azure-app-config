@@ -34,6 +34,7 @@
       * `pizza-flavor-indirect-secret-sentinelless-pull` with a label of "`sentinelless-pull`" and a secret reference pointing to "`indirectlyAccessedSecretFlavorSentinellessPull`".
 10. Find and replace all occurrences of "`INSERT-YOUR-APP-CONFIG-RESOURCE-NAME-HERE`" under the `src/web` folder of this codebase with the actual name of your Azure App Configuration resource.
 
+**Note:**  I'm almost certainly using labels wrong.  I believe they're really meant more for multiple value variations per key name, as you might want with environments, than for "thematically grouping" keys where there's no overlap in name anyway.  I suspect I should've been doing what I'm doing with naming conventions -- but I wanted to play with labels.  Maybe I'll clean this up later.
 
 ---
 
