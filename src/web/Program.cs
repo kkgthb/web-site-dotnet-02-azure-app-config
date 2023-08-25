@@ -32,7 +32,7 @@ builder.Configuration.AddAzureAppConfiguration(options =>
 
 builder.Configuration.AddAzureAppConfiguration(options =>
     {
-        var appConfigName = "insert-your-app-config-resource-name-here";
+        var appConfigName = "INSERT-YOUR-APP-CONFIG-RESOURCE-NAME-HERE";
         var appConfigUrl = $"https://{appConfigName}.azconfig.io";
         options.Connect(new Uri(appConfigUrl), azureCredential)
             .Select(
