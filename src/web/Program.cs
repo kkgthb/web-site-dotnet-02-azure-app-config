@@ -37,6 +37,23 @@ builder.Configuration.AddAzureAppConfiguration(options =>
         options.Connect(new Uri(appConfigUrl), azureCredential)
             .Select(
                 keyFilter: KeyFilter.Any,
+                labelFilter: "sentinelless-pull"
+            )
+        ;
+        options.ConfigureKeyVault(options => { 
+            options.SetCredential(azureCredential);
+            options.SetSecretRefreshInterval(refreshInterval: TimeSpan.FromSeconds(15));
+        });
+    }
+);
+
+builder.Configuration.AddAzureAppConfiguration(options =>
+    {
+        var appConfigName = "INSERT-YOUR-APP-CONFIG-RESOURCE-NAME-HERE";
+        var appConfigUrl = $"https://{appConfigName}.azconfig.io";
+        options.Connect(new Uri(appConfigUrl), azureCredential)
+            .Select(
+                keyFilter: KeyFilter.Any,
                 labelFilter: "pull-update"
             )
             .ConfigureRefresh(refreshOptions =>

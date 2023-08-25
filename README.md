@@ -23,13 +23,15 @@
       * `directlyAccessedSecretFlavorPullUpdate` with a value of "`margherita`".
       * `indirectlyAccessedSecretFlavorPullUpdate` with a value of "`sausage`".
       * `indirectlyAccessedSecretFlavorStatic` with a value of "`anchovy`".
+      * `indirectlyAccessedSecretFlavorSentinellessPull` with a value of "`pepperoni`".
 8. Create the following key-value pairs in your Azure App Configuration resource:
-      * `sentinel-for-pull-update` with a value of "`attempt 1`".
-      * `pizza-flavor-non-secret-pull-update` with a value of "`green pepper`".
-      * `pizza-flavor-non-secret-static` with a value of "`pineapple`".
+      * `sentinel-for-pull-update` with a label of "`pull-update`" and a value of "`attempt 1`".
+      * `pizza-flavor-non-secret-pull-update` with a label of "`pull-update`" and a value of "`green pepper`".
+      * `pizza-flavor-non-secret-static` with a label of "`static`" and a value of "`pineapple`".
 8. Create the following Key Vault references in your Azure App Configuration resource:
-      * `pizza-flavor-indirect-secret-pull-update` with a secret reference pointing to "`indirectlyAccessedSecretFlavorPullUpdate`".
-      * `pizza-flavor-indirect-secret-static` with a secret reference pointing to "`indirectlyAccessedSecretFlavorStatic`".
+      * `pizza-flavor-indirect-secret-pull-update` with a label of "`pull-update`" and a secret reference pointing to "`indirectlyAccessedSecretFlavorPullUpdate`".
+      * `pizza-flavor-indirect-secret-static` with a label of "`static`" and a secret reference pointing to "`indirectlyAccessedSecretFlavorStatic`".
+      * `pizza-flavor-indirect-secret-sentinelless-pull` with a label of "`sentinelless-pull`" and a secret reference pointing to "`indirectlyAccessedSecretFlavorSentinellessPull`".
 
 
 ---
@@ -98,7 +100,15 @@ Take a look in the upper-left corner of the webpage you just visited:  it should
 
 1. Change the value of "`pizza-flavor-non-secret-pull-update`" to "`green pepper 2`".  Wait 15 seconds, reload the webpage twice, and validate that it still says "`green pepper`".
 1. Change the value of "`pizza-flavor-non-secret-static`" to "`pineapple 2`".  Wait 15 seconds, reload the webpage twice, and validate that it still says "`pineapple`".
-1. Change the value of "`sentinel-for-pull-update`" to "`attempt 2`".  Wait 15 seconds, reload the webpage twice, and validate that it now says "`green pepper 2`" but still just "`pineapple`."
+1. Create a new version of "`indirectlyAccessedSecretFlavorPullUpdate`" with a value of "`sausage 2`".  Wait 15 seconds, reload the webpage twice, and validate that it still says "`sausage`".
+1. Create a new version of "`indirectlyAccessedSecretFlavorStatic`" with a value of "`anchovy 2`".  Wait 15 seconds, reload the webpage twice, and validate that it still says "`anchovy`".
+1. Create a new version of "`indirectlyAccessedSecretFlavorSentinellessPull`" with a value of "`pepperoni 2`".  Wait 15 seconds, reload the webpage twice, and validate that it now says "`pepperoni 2`".
+      * You should also see server logs after the first reload of this step, and before the second, reading something like this:
+            ```
+            info: Microsoft.Extensions.Configuration.AzureAppConfiguration.Refresh[0]
+                  Setting updated from Key Vault. Key:'pizza-flavor-indirect-secret-sentinelless-pull'
+            ```
+1. Change the value of "`sentinel-for-pull-update`" to "`attempt 2`".  Wait 15 seconds, reload the webpage twice, and validate that it now says "`green pepper 2`" and "`sausage 2`" but still just "`pineapple`" and "`anchovy`".
       * You should also see server logs after the first post-sentinel-edit reload, and before the second, reading something like this:
             ```
             info: Microsoft.Extensions.Configuration.AzureAppConfiguration.Refresh[0]
