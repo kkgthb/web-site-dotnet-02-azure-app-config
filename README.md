@@ -143,5 +143,4 @@ Hold <kbd>Ctrl</kbd> and hit <kbd>c</kbd>, then release them both.
 
 ## Notes
 
-* Even if you set your sentinel-polling lifecycle to 15 seconds and let 15 seconds elapse, .NET won't actually bother to poll Azure App Config and check whether "sentinel" has been updated until some sort of URL _(not necessarily a valid one, just one)_ gets actually visited.
-      * Therefore, don't be surprised if you have to reload your web page twice to see your changes.  _(Or visit some other page and then reload the page on which you want to see your changes.)_
+* Even if you set your sentinel-polling lifecycle to 15 seconds and let 15 seconds elapse, .NET won't actually bother to poll Azure App Config and check whether "sentinel" has been updated until some sort of URL _(not necessarily a valid one, just one)_ gets actually visited.  Therefore, don't be surprised if you have to reload your web page twice to see your changes.  _(Or visit some other page and then reload the page on which you want to see your changes.)_
