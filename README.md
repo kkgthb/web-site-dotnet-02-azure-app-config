@@ -14,25 +14,32 @@
 
 1. To play with this on your local computer, you must install the .NET runtime _(preferably version 7, as that's what I coded this using)_ onto your local machine in a way that lets you run commands beginning with "`dotnet`" from your computer's command prompt _(the "dotnet" executable must be in your "PATH.")_.
     * Don't have Windows admin rights?  Check out David Kou's [Install the .NET runtime onto Windows without admin rights](https://dev.to/davidkou/install-anything-without-admin-rights-4p0j#install-dotnet-sdk-or-runtime-without-admin).
-2. You must download a copy of this codebase onto your local computer.
-3. Assign the "App Configuration Data Reader" role to whatever Azure AD identity will be logging into Azure App Configuration for this runtime.  Plain old "Owner" or "Contributor" isn't adequate.  Wait up to 15 minutes before you stop getting 403 errors.
-4. It seems actually having a key-value pair or something else in the App Configuration resource also helps avoid 403 errors.
-5. Assign the "Key Vault Secrets User" role to whatever Azure AD identity will be logging into Azure App Configuration for this runtime.  Plain old "Owner" or "Contributor" isn't adequate.
-6. You personally may also need "Key Vault Administrator" to go into the Azure portal and set up secrets in Key Vault.
-7. Create 2 secrets in your Key Vault resource:
+1. You must download a copy of this codebase onto your local computer.
+1. Assign the "App Configuration Data Reader" role to whatever Azure AD identity will be logging into Azure App Configuration for this runtime.  Plain old "Owner" or "Contributor" isn't adequate.  Wait up to 15 minutes before you stop getting 403 errors.
+1. It seems actually having a key-value pair or something else in the App Configuration resource also helps avoid 403 errors.
+1. Assign the "Key Vault Secrets User" role to whatever Azure AD identity will be logging into Azure App Configuration for this runtime.  Plain old "Owner" or "Contributor" isn't adequate.
+1. You personally may also need "Key Vault Administrator" to go into the Azure portal and set up secrets in Key Vault.
+1. Create 2 secrets in your Key Vault resource:
       * `directlyAccessedSecretFlavorPullUpdate` with a value of "`margherita`".
       * `indirectlyAccessedSecretFlavorPullUpdate` with a value of "`sausage`".
       * `indirectlyAccessedSecretFlavorStatic` with a value of "`anchovy`".
       * `indirectlyAccessedSecretFlavorSentinellessPull` with a value of "`pepperoni`".
-8. Create the following key-value pairs in your Azure App Configuration resource:
+1. Create the following key-value pairs in your Azure App Configuration resource:
       * `sentinel-for-pull-update` with a label of "`pull-update`" and a value of "`attempt 1`".
+            ```sh
+            az appconfig kv set --key "sentinel-for-pull-update" --label "pull-update" --value "attempt 1" --name "INSERT-YOUR-APP-CONFIG-RESOURCE-NAME-HERE"
+            ```
       * `pizza-flavor-non-secret-pull-update` with a label of "`pull-update`" and a value of "`green pepper`".
       * `pizza-flavor-non-secret-static` with a label of "`static`" and a value of "`pineapple`".
-9. Create the following Key Vault references in your Azure App Configuration resource:
+1. Create the following Key Vault references in your Azure App Configuration resource:
       * `pizza-flavor-indirect-secret-pull-update` with a label of "`pull-update`" and a secret reference pointing to "`indirectlyAccessedSecretFlavorPullUpdate`".
       * `pizza-flavor-indirect-secret-static` with a label of "`static`" and a secret reference pointing to "`indirectlyAccessedSecretFlavorStatic`".
       * `pizza-flavor-indirect-secret-sentinelless-pull` with a label of "`sentinelless-pull`" and a secret reference pointing to "`indirectlyAccessedSecretFlavorSentinellessPull`".
-10. Find and replace all occurrences of "`INSERT-YOUR-APP-CONFIG-RESOURCE-NAME-HERE`" under the `src/web` folder of this codebase with the actual name of your Azure App Configuration resource.
+1. Create the following feature flag in your Azure App Configuration resource:
+      * `release-red-sauce` with "Enable feature flag" checked, a label of "`percentage-enabled`," "Use feature filter" checked, and a custom filter added with a name of "`Microsoft.Percentage`," a parameter name of "`Value`," and a Value of "`33`."
+1. Log your Azure CLI into Azure.
+      * _(For good measure, do `azure logout` and then `azure login` if it's been a while since you played with this codebase.)_
+1. Find and replace all occurrences of "`INSERT-YOUR-APP-CONFIG-RESOURCE-NAME-HERE`" under the `src/web` folder of this codebase with the actual name of your Azure App Configuration resource.
 
 **Note:**  I'm almost certainly using labels wrong.  I believe they're really meant more for multiple value variations per key name, as you might want with environments, than for "thematically grouping" keys where there's no overlap in name anyway.  I suspect I should've been doing what I'm doing with naming conventions -- but I wanted to play with labels.  Maybe I'll clean this up later.
 
@@ -100,6 +107,7 @@ Take a look in the upper-left corner of the webpage you just visited:  it should
 
 ## Trying key-value updates
 
+1. Reload the page a dozen or so times.  Note that because we've set the "red sauce" feature to only be enabled 33% of the time, you should see it mention white sauce about 2/3 of the time and red sauce about 1/3 of the time.
 1. Change the value of "`pizza-flavor-non-secret-pull-update`" to "`green pepper 2`".  Wait 15 seconds, reload the webpage twice, and validate that it still says "`green pepper`".
 1. Change the value of "`pizza-flavor-non-secret-static`" to "`pineapple 2`".  Wait 15 seconds, reload the webpage twice, and validate that it still says "`pineapple`".
 1. Create a new version of "`indirectlyAccessedSecretFlavorPullUpdate`" with a value of "`sausage 2`".  Wait 15 seconds, reload the webpage twice, and validate that it still says "`sausage`".

@@ -1,5 +1,7 @@
 using Azure.Identity;
 using Microsoft.Extensions.Configuration.AzureAppConfiguration;
+using Microsoft.FeatureManagement;
+using Microsoft.FeatureManagement.FeatureFilters;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -69,7 +71,30 @@ builder.Configuration.AddAzureAppConfiguration(options =>
     }
 );
 
+builder.Configuration.AddAzureAppConfiguration(options =>
+    {
+        var appConfigName = "INSERT-YOUR-APP-CONFIG-RESOURCE-NAME-HERE";
+        var appConfigUrl = $"https://{appConfigName}.azconfig.io";
+        options.Connect(new Uri(appConfigUrl), azureCredential)
+            .UseFeatureFlags(opt =>
+            {
+                // Each HTTP request will result in an auto-poll for fresh enabled/disabled/filter values, as long as it's 
+                // been 30 seconds or more since the last check.
+                // This polling comes built in to .UserFeatureFlags().
+                opt.Select(
+                    featureFlagFilter: KeyFilter.Any,
+                    labelFilter: "percentage-enabled"
+                );
+            })
+        ;
+    }
+);
+
 builder.Services.AddAzureAppConfiguration();
+
+builder.Services.AddFeatureManagement()
+    .AddFeatureFilter<PercentageFilter>()
+    ;
 
 var app = builder.Build();
 
